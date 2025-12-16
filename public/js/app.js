@@ -82,20 +82,26 @@ class EduLearnApp {
      */
     setupAuthStateListener() {
         this.authManager.checkAuthState(async (user) => {
-            if (user) {
-                try {
-                    const userData = await this.dataManager.loadUserData(user.uid);
-                    this.uiManager.updateAuthUI(user, userData);
-                    this.uiManager.updateResponsiveLayout(true);
-                    console.log("✓ User authenticated:", user.email);
-                } catch (error) {
-                    console.error("Error loading user data:", error);
-                    showMessage("Error loading your data", "error");
+            try {
+                if (user) {
+                    try {
+                        const userData = await this.dataManager.loadUserData(user.uid);
+                        this.uiManager.updateAuthUI(user, userData);
+                        this.uiManager.updateResponsiveLayout(true);
+                        this.updateDashboard();
+                        console.log("✓ User authenticated:", user.email);
+                    } catch (error) {
+                        console.error("Error loading user data:", error);
+                        this.uiManager.updateAuthUI(user, null);
+                        this.uiManager.updateResponsiveLayout(true);
+                    }
+                } else {
+                    this.uiManager.updateAuthUI(null, null);
+                    this.uiManager.updateResponsiveLayout(false);
+                    console.log("✓ User not authenticated");
                 }
-            } else {
-                this.uiManager.updateAuthUI(null, null);
-                this.uiManager.updateResponsiveLayout(false);
-                console.log("✓ User not authenticated");
+            } catch (error) {
+                console.error("Auth state error:", error);
             }
         });
     }
@@ -332,6 +338,13 @@ class DataManager {
     }
 
     getDashboardStats() {
+        if (!this.currentUserData) return {
+            activeCourses: 0,
+            pendingAssignments: 0,
+            averageGrade: 0,
+            studyHours: 0
+        };
+        
         const courses = this.currentUserData.courses || [];
         const assignments = this.currentUserData.assignments || [];
         const pending = assignments.filter(a => !a.completed).length;
@@ -348,6 +361,8 @@ class DataManager {
     }
 
     getUpcomingDeadlines(limit = 5) {
+        if (!this.currentUserData) return [];
+        
         const assignments = this.currentUserData.assignments || [];
         return assignments
             .filter(a => !a.completed && a.dueDate)
@@ -356,6 +371,7 @@ class DataManager {
     }
 
     getCourses() {
+        if (!this.currentUserData) return [];
         return this.currentUserData.courses || [];
     }
 }
