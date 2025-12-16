@@ -266,32 +266,41 @@ class AuthManager {
     }
 
     async loginWithGoogle() {
-        const { googleProvider } = await import('./firebase-config.js');
-        const result = await this.auth.signInWithPopup(googleProvider);
-        const user = result.user;
+        const { googleProvider, signInWithPopup } = await import('../firebase-config.js');
+        try {
+            const result = await signInWithPopup(this.auth, googleProvider);
+            const user = result.user;
 
-        const { serverTimestamp, setDoc, getDoc, doc } = await import('./firebase-config.js');
-        const userDocRef = doc(this.db, 'users', user.uid);
-        const userDocSnap = await getDoc(userDocRef);
-        
-        if (!userDocSnap.exists()) {
-            const userData = {
-                uid: user.uid,
-                name: user.displayName,
-                email: user.email,
-                photoURL: user.photoURL,
-                role: 'student',
-                major: 'Computer Science',
-                createdAt: serverTimestamp(),
-                lastLogin: serverTimestamp(),
-                courses: [],
-                assignments: [],
-                studyHours: 0
-            };
-            await setDoc(userDocRef, userData);
+            const { serverTimestamp, setDoc, getDoc, doc } = await import('../firebase-config.js');
+            const userDocRef = doc(this.db, 'users', user.uid);
+            const userDocSnap = await getDoc(userDocRef);
+            
+            if (!userDocSnap.exists()) {
+                const userData = {
+                    uid: user.uid,
+                    name: user.displayName || 'Google User',
+                    email: user.email,
+                    photoURL: user.photoURL,
+                    role: 'student',
+                    major: 'Computer Science',
+                    createdAt: serverTimestamp(),
+                    lastLogin: serverTimestamp(),
+                    courses: [],
+                    assignments: [],
+                    submissions: [],
+                    studyHours: 0,
+                    gpa: 0,
+                    enrolledCourses: [],
+                    completedCourses: []
+                };
+                await setDoc(userDocRef, userData);
+            }
+
+            return user;
+        } catch (error) {
+            console.error("Google login error:", error);
+            throw error;
         }
-
-        return user;
     }
 
     async logout() {

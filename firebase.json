@@ -35,6 +35,48 @@
         ]
       }
     ],
+    "redirects": [
+      {
+        "source": "/dashboard",
+        "destination": "/",
+        "type": 301
+      },
+      {
+        "source": "/course",
+        "destination": "/",
+        "type": 301
+      },
+      {
+        "source": "/courses",
+        "destination": "/",
+        "type": 301
+      },
+      {
+        "source": "/admin",
+        "destination": "/",
+        "type": 301
+      },
+      {
+        "source": "/instructor",
+        "destination": "/",
+        "type": 301
+      },
+      {
+        "source": "/gradebook",
+        "destination": "/",
+        "type": 301
+      },
+      {
+        "source": "/profile",
+        "destination": "/",
+        "type": 301
+      },
+      {
+        "source": "/search",
+        "destination": "/",
+        "type": 301
+      }
+    ],
     "rewrites": [
       {
         "source": "**",
@@ -43,3 +85,4 @@
     ]
   }
 }
+
