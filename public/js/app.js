@@ -3,10 +3,9 @@
  * Orchestrates all modules and initializes the app
  */
 
-// Import all modules (Note: In production, use proper module bundling)
+// Import firebase-config at the top level
 class EduLearnApp {
-    constructor(firebase) {
-        this.firebase = firebase;
+    constructor() {
         this.auth = null;
         this.db = null;
         this.authManager = null;
@@ -23,7 +22,7 @@ class EduLearnApp {
             console.log("🚀 Initializing EduLearn...");
 
             // Initialize Firebase
-            if (!this.initializeFirebase()) {
+            if (!await this.initializeFirebase()) {
                 throw new Error("Firebase initialization failed");
             }
 
@@ -46,19 +45,11 @@ class EduLearnApp {
     /**
      * Initialize Firebase
      */
-    initializeFirebase() {
+    async initializeFirebase() {
         try {
-            const firebaseConfig = {
-                apiKey: "AIzaSyABPIPlcodXrees7rMItdnEthzffKaqhCY",
-                authDomain: "learning-mgt-sys-ec11d.web.app",
-                projectId: "learning-mgt-sys-ec11d",
-                messagingSenderId: "192661015638"
-            };
-
-            this.firebase.initializeApp(firebaseConfig);
-            this.auth = this.firebase.auth();
-            this.db = this.firebase.firestore();
-
+            const { auth: fbAuth, db: fbDb } = await import('./firebase-config.js');
+            this.auth = fbAuth;
+            this.db = fbDb;
             console.log("✓ Firebase initialized");
             return true;
         } catch (error) {
@@ -197,7 +188,7 @@ class EduLearnApp {
      */
     static getInstance() {
         if (!window.EduLearnAppInstance) {
-            window.EduLearnAppInstance = new EduLearnApp(firebase);
+            window.EduLearnAppInstance = new EduLearnApp();
         }
         return window.EduLearnAppInstance;
     }
@@ -250,34 +241,34 @@ class AuthManager {
         const userCredential = await this.auth.createUserWithEmailAndPassword(email, password);
         await userCredential.user.updateProfile({ displayName: userData.name });
 
+        const { serverTimestamp, setDoc, doc } = await import('./firebase-config.js');
         const userDoc = {
             uid: userCredential.user.uid,
             name: userData.name,
             email: email,
             role: userData.role || 'student',
             major: userData.major,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+            createdAt: serverTimestamp(),
+            lastLogin: serverTimestamp(),
             courses: [],
             assignments: [],
             studyHours: 0
         };
 
-        await this.db.collection('users').doc(userCredential.user.uid).set(userDoc);
+        await setDoc(doc(this.db, 'users', userCredential.user.uid), userDoc);
         return userCredential.user;
     }
 
     async loginWithGoogle() {
-        const provider = new firebase.auth.GoogleAuthProvider();
-        provider.addScope('profile');
-        provider.addScope('email');
-        provider.setCustomParameters({ prompt: 'select_account' });
-
-        const result = await this.auth.signInWithPopup(provider);
+        const { googleProvider } = await import('./firebase-config.js');
+        const result = await this.auth.signInWithPopup(googleProvider);
         const user = result.user;
 
-        const userDoc = await this.db.collection('users').doc(user.uid).get();
-        if (!userDoc.exists) {
+        const { serverTimestamp, setDoc, getDoc, doc } = await import('./firebase-config.js');
+        const userDocRef = doc(this.db, 'users', user.uid);
+        const userDocSnap = await getDoc(userDocRef);
+        
+        if (!userDocSnap.exists()) {
             const userData = {
                 uid: user.uid,
                 name: user.displayName,
@@ -285,13 +276,13 @@ class AuthManager {
                 photoURL: user.photoURL,
                 role: 'student',
                 major: 'Computer Science',
-                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                createdAt: serverTimestamp(),
+                lastLogin: serverTimestamp(),
                 courses: [],
                 assignments: [],
                 studyHours: 0
             };
-            await this.db.collection('users').doc(user.uid).set(userData);
+            await setDoc(userDocRef, userData);
         }
 
         return user;
@@ -310,11 +301,14 @@ class DataManager {
     }
 
     async loadUserData(userId) {
-        const userDoc = await this.db.collection('users').doc(userId).get();
-        if (userDoc.exists) {
-            this.currentUserData = userDoc.data();
-            await this.db.collection('users').doc(userId).update({
-                lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+        const { getDoc, doc, updateDoc, serverTimestamp } = await import('./firebase-config.js');
+        const userDocRef = doc(this.db, 'users', userId);
+        const userDocSnap = await getDoc(userDocRef);
+        
+        if (userDocSnap.exists()) {
+            this.currentUserData = userDocSnap.data();
+            await updateDoc(userDocRef, {
+                lastLogin: serverTimestamp()
             });
             return this.currentUserData;
         }
@@ -322,7 +316,8 @@ class DataManager {
     }
 
     async saveUserData(userId, userData) {
-        await this.db.collection('users').doc(userId).set(userData, { merge: true });
+        const { setDoc, doc } = await import('./firebase-config.js');
+        await setDoc(doc(this.db, 'users', userId), userData, { merge: true });
         this.currentUserData = userData;
     }
 
