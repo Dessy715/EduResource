@@ -1,0 +1,215 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+    
+    function getUserRole(userId) {
+      return get(/databases/$(database)/documents/users/$(userId)).data.role;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && getUserRole(request.auth.uid) == 'admin';
+    }
+    
+    function isInstructor() {
+      return isAuthenticated() && getUserRole(request.auth.uid) == 'instructor';
+    }
+    
+    function isStudent() {
+      return isAuthenticated() && getUserRole(request.auth.uid) == 'student';
+    }
+    
+    // ============ Users Collection ============
+    match /users/{userId} {
+      // Users can read/write their own documents
+      allow read, write: if isOwner(userId);
+      
+      // Admins can read all user documents
+      allow read: if isAdmin();
+      
+      // Only admins can delete users
+      allow delete: if isAdmin();
+      
+      // Only authenticated users can create accounts for themselves
+      allow create: if isOwner(userId) && 
+                       request.resource.data.uid == userId &&
+                       request.resource.data.role in ['student', 'instructor'];
+    }
+    
+    // ============ Courses Collection ============
+    match /courses/{courseId} {
+      // Authenticated users can read courses
+      allow read: if isAuthenticated();
+      
+      // Instructors can create courses
+      allow create: if isInstructor() &&
+                       request.resource.data.createdBy == request.auth.uid;
+      
+      // Instructors can update their own courses
+      allow update: if isInstructor() &&
+                       resource.data.createdBy == request.auth.uid;
+      
+      // Only instructors who created the course can delete
+      allow delete: if isInstructor() &&
+                       resource.data.createdBy == request.auth.uid;
+      
+      // Admins can read, update, delete all courses
+      allow read, update, delete: if isAdmin();
+      
+      // ---- Subcollections ----
+      match /modules/{moduleId} {
+        allow read: if isAuthenticated();
+        allow create, update: if isInstructor() &&
+                               get(/databases/$(database)/documents/courses/$(courseId)).data.createdBy == request.auth.uid;
+        allow delete: if isInstructor() &&
+                      get(/databases/$(database)/documents/courses/$(courseId)).data.createdBy == request.auth.uid;
+      }
+      
+      match /materials/{materialId} {
+        allow read: if isAuthenticated();
+        allow create, update, delete: if isInstructor() &&
+                                       get(/databases/$(database)/documents/courses/$(courseId)).data.createdBy == request.auth.uid;
+      }
+    }
+    
+    // ============ Assignments Collection ============
+    match /assignments/{assignmentId} {
+      // Authenticated users can read assignments
+      allow read: if isAuthenticated();
+      
+      // Instructors can create assignments
+      allow create: if isInstructor() &&
+                       request.resource.data.createdBy == request.auth.uid;
+      
+      // Instructors can update their own assignments
+      allow update: if isInstructor() &&
+                       resource.data.createdBy == request.auth.uid;
+      
+      // Instructors can delete their own assignments
+      allow delete: if isInstructor() &&
+                       resource.data.createdBy == request.auth.uid;
+      
+      // Admins can manage all assignments
+      allow read, update, delete: if isAdmin();
+      
+      // ---- Submissions Subcollection ----
+      match /submissions/{submissionId} {
+        // Students can read their own submissions
+        allow read: if isStudent() && resource.data.studentId == request.auth.uid;
+        
+        // Instructors can read submissions for their assignments
+        allow read: if isInstructor() &&
+                       get(/databases/$(database)/documents/assignments/$(assignmentId)).data.createdBy == request.auth.uid;
+        
+        // Students can create submissions
+        allow create: if isStudent() &&
+                        request.resource.data.studentId == request.auth.uid &&
+                        request.resource.data.assignmentId == assignmentId;
+        
+        // Students can update their own submissions
+        allow update: if isStudent() &&
+                        resource.data.studentId == request.auth.uid;
+        
+        // Instructors can grade submissions
+        allow update: if isInstructor() &&
+                        get(/databases/$(database)/documents/assignments/$(assignmentId)).data.createdBy == request.auth.uid &&
+                        request.resource.data.grade != null;
+        
+        // Admins can manage all submissions
+        allow read, update, delete: if isAdmin();
+      }
+    }
+    
+    // ============ Grades Collection ============
+    match /grades/{gradeId} {
+      // Students can read their own grades
+      allow read: if isStudent() && resource.data.studentId == request.auth.uid;
+      
+      // Instructors can read and create grades for their courses
+      allow read, create, update: if isInstructor() &&
+                                    get(/databases/$(database)/documents/courses/$(resource.data.courseId)).data.createdBy == request.auth.uid;
+      
+      // Admins can manage all grades
+      allow read, write: if isAdmin();
+    }
+    
+    // ============ Announcements Collection ============
+    match /announcements/{announcementId} {
+      // Authenticated users can read announcements
+      allow read: if isAuthenticated();
+      
+      // Instructors can create announcements for their courses
+      allow create: if isInstructor() &&
+                       request.resource.data.courseId != null &&
+                       get(/databases/$(database)/documents/courses/$(request.resource.data.courseId)).data.createdBy == request.auth.uid;
+      
+      // Instructors can update/delete their announcements
+      allow update, delete: if isInstructor() &&
+                             get(/databases/$(database)/documents/courses/$(resource.data.courseId)).data.createdBy == request.auth.uid;
+      
+      // Admins can manage all announcements
+      allow read, update, delete: if isAdmin();
+    }
+    
+    // ============ Messages Collection (for messaging) ============
+    match /messages/{messageId} {
+      // Users can read messages sent to them
+      allow read: if isAuthenticated() &&
+                     (resource.data.recipientId == request.auth.uid ||
+                      resource.data.senderId == request.auth.uid);
+      
+      // Users can create messages
+      allow create: if isAuthenticated() &&
+                       request.resource.data.senderId == request.auth.uid;
+      
+      // Only message sender can delete
+      allow delete: if isAuthenticated() &&
+                       resource.data.senderId == request.auth.uid;
+      
+      // Admins can manage all messages
+      allow read, update, delete: if isAdmin();
+    }
+    
+    // ============ Analytics Collection ============
+    match /analytics/{analyticsId} {
+      // Instructors can read analytics for their courses
+      allow read: if isInstructor() &&
+                     (resource.data.instructorId == request.auth.uid ||
+                      resource.data.courseInstructor == request.auth.uid);
+      
+      // System can write analytics data
+      allow write: if request.auth != null;
+      
+      // Admins can manage all analytics
+      allow read, write: if isAdmin();
+    }
+    
+    // ============ Settings Collection ============
+    match /settings/{settingsId} {
+      // Users can read/write their own settings
+      allow read, write: if isOwner(settingsId);
+      
+      // Admins can manage all settings
+      allow read, write: if isAdmin();
+    }
+    
+    // ============ System Collection (for admin) ============
+    match /system/{systemDoc} {
+      // Only admins can access system documents
+      allow read, write: if isAdmin();
+    }
+    
+    // ============ Deny All Other Access ============
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard - EduLMS</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/all.min.css" rel="stylesheet">
+    <script type="module" src="firebase-config.js"></script>
+    <script src="app.js" defer></script>
+    <script src="dashboard.js" defer></script>
+</head>
+<body>
+    <header class="header">
+        <nav class="nav-container">
+            <a href="index.html" class="logo">
+                <i class="fas fa-graduation-cap"></i> EduLMS
+            </a>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="#dashboard">Dashboard</a></li>
+                <li><a href="#courses">My Courses</a></li>
+                <li><a href="#assignments">Assignments</a></li>
+                <li id="authStatus"></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="dashboard">
+        <aside class="sidebar">
+            <div class="user-profile">
+                <img id="userAvatar" src="https://ui-avatars.com/api/?name=Student&background=667eea&color=fff" alt="Avatar">
+                <h3 id="userName">Loading...</h3>
+                <p id="userEmail">student@example.com</p>
+            </div>
+            <ul class="sidebar-menu">
+                <li><a href="#overview" class="active"><i class="fas fa-home"></i> Overview</a></li>
+                <li><a href="#my-courses"><i class="fas fa-book"></i> My Courses</a></li>
+                <li><a href="#assignments"><i class="fas fa-tasks"></i> Assignments</a></li>
+                <li><a href="#grades"><i class="fas fa-chart-line"></i> Grades</a></li>
+                <li><a href="#calendar"><i class="fas fa-calendar"></i> Calendar</a></li>
+                <li><a href="#messages"><i class="fas fa-envelope"></i> Messages</a></li>
+                <li><a href="#settings"><i class="fas fa-cog"></i> Settings</a></li>
+            </ul>
+        </aside>
+
+        <div class="content-area">
+            <section id="overview">
+                <h1>Welcome Back, <span id="welcomeName">Student</span>!</h1>
+                <p>Here's an overview of your learning progress</p>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3 id="activeCourses">0</h3>
+                        <p>Active Courses</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="pendingAssignments">0</h3>
+                        <p>Pending Assignments</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="averageGrade">0%</h3>
+                        <p>Average Grade</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="completedCourses">0</h3>
+                        <p>Completed Courses</p>
+                    </div>
+                </div>
+
+                <h2>Recent Activity</h2>
+                <div id="recentActivity" class="activity-feed">
+                    <!-- Activity items will be loaded here -->
+                </div>
+
+                <h2>My Courses</h2>
+                <div id="enrolledCourses" class="courses-grid">
+                    <!-- Enrolled courses will be loaded here -->
+                </div>
+            </section>
+
+            <section id="my-courses" style="display: none;">
+                <h1>My Courses</h1>
+                <div id="allEnrolledCourses" class="courses-grid">
+                    <!-- All enrolled courses -->
+                </div>
+            </section>
+
+            <section id="assignments" style="display: none;">
+                <h1>Assignments</h1>
+                <div id="assignmentsList" class="assignment-list">
+                    <!-- Assignments will be loaded here -->
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script>
+        // Tab switching for dashboard
+        document.querySelectorAll('.sidebar-menu a').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const sectionId = this.getAttribute('href').substring(1);
+                
+                // Update active tab
+                document.querySelectorAll('.sidebar-menu a').forEach(l => l.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Show selected section
+                document.querySelectorAll('.content-area > section').forEach(section => {
+                    section.style.display = 'none';
+                });
+                document.getElementById(sectionId).style.display = 'block';
+            });
+        });
+    </script>
+</body>
+</html>

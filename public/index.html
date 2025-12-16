@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <base target="_self">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduLearn - Student Learning Management System</title>
+    <meta name="description" content="Modern online learning management system for students with course management, assignments, grades, and collaboration tools">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+    <!-- Add for analytics if needed -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-analytics-compat.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#4F46E5",
+                        secondary: "#10B981",
+                        accent: "#F59E0B",
+                        dark: "#1F2937",
+                        light: "#F9FAFB"
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'system-ui', 'sans-serif']
+                    },
+                    spacing: {
+                        '18': '4.5rem',
+                        '88': '22rem',
+                        '128': '32rem'
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .sidebar {
+            scrollbar-width: thin;
+            scrollbar-color: #CBD5E1 transparent;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+        }
+        .sidebar.active {
+            transform: translateX(0);
+        }
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .sidebar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .sidebar::-webkit-scrollbar-thumb {
+            background-color: #CBD5E1;
+            border-radius: 3px;
+        }
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+        .progress-ring-circle {
+            stroke-dasharray: 283;
+            stroke-dashoffset: 283;
+            transition: stroke-dashoffset 0.5s ease;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-google {
+            background: white;
+            color: #757575;
+            border: 1px solid #ddd;
+        }
+        .btn-google:hover {
+            background: #f8f8f8;
+            border-color: #ccc;
+        }
+        .mobile-tab-nav {
+            display: none;
+        }
+        @media (max-width: 1023px) {
+            .mobile-tab-nav {
+                display: flex;
+            }
+            .lg\:flex.sidebar {
+                display: none !important;
+            }
+            .lg\:flex.sidebar.active {
+                display: flex !important;
+                position: fixed;
+                top: 4rem;
+                left: 0;
+                height: calc(100vh - 4rem);
+                z-index: 40;
+                background: white;
+                width: 280px;
+            }
+            .sidebar-backdrop {
+                display: none;
+                position: fixed;
+                top: 4rem;
+                left: 0;
+                width: 100%;
+                height: calc(100vh - 4rem);
+                background: rgba(0,0,0,0.5);
+                z-index: 39;
+            }
+            .sidebar-backdrop.active {
+                display: block;
+            }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .mobile-tab-item {
+            flex: 1;
+            text-align: center;
+            padding: 0.75rem 0.5rem;
+            font-size: 0.75rem;
+            border-bottom: 3px solid transparent;
+        }
+        .mobile-tab-item.active {
+            border-bottom-color: #4F46E5;
+            color: #4F46E5;
+            font-weight: 600;
+        }
+        .mobile-tab-item i {
+            font-size: 1rem;
+            margin-bottom: 0.25rem;
+        }
+        /* Role badge styles */
+        .role-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.5rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .role-option:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        .role-badge.student {
+            background-color: rgba(79, 70, 229, 0.1);
+            color: rgb(79, 70, 229);
+        }
+
+        .role-badge.instructor {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: rgb(16, 185, 129);
+        }
+
+        .role-badge.admin {
+            background-color: rgba(245, 158, 11, 0.1);
+            color: rgb(245, 158, 11);
+        }
+
+        /* Role option selection */
+        .role-option.selected {
+            border-width: 2px;
+        }
+
+        .role-option.selected[data-role="student"] {
+            border-color: #4F46E5;
+            background-color: rgba(79, 70, 229, 0.05);
+        }
+
+        .role-option.selected[data-role="instructor"] {
+            border-color: #10B981;
+            background-color: rgba(16, 185, 129, 0.05);
+        }
+
+        .role-option.selected[data-role="admin"] {
+            border-color: #F59E0B;
+            background-color: rgba(245, 158, 11, 0.05);
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-50">
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 z-50 flex items-center justify-center">
+        <div class="bg-white rounded-xl p-8 flex flex-col items-center">
+            <div class="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
+            <p class="text-gray-700" id="loadingText">Loading...</p>
+        </div>
+    </div>
+
+    <!-- Sidebar Backdrop (Mobile Only) -->
+    <div id="sidebarBackdrop" class="sidebar-backdrop"></div>
+
+    <!-- Top Navigation -->
+    <header class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-40">
+        <div class="container mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <!-- Logo and Mobile Menu Toggle -->
+                <div class="flex items-center space-x-3">
+                    <!-- Mobile Menu Toggle (Visible on mobile when logged in) -->
+                    <button id="mobileMenuToggle" class="lg:hidden hidden p-2 text-gray-600 hover:text-primary hover:bg-gray-100 rounded-lg transition-colors">
+                        <i class="fas fa-bars text-lg"></i>
+                    </button>
+                    
+                    <!-- Logo -->
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+                            <i class="fas fa-graduation-cap text-white text-xl"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-xl font-bold text-gray-900">EduLearn</h1>
+                            <p class="text-xs text-gray-500">Student LMS</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User Menu -->
+                <div id="userMenu" class="flex items-center space-x-4">
+                    <!-- User Profile (when logged in) -->
+                    <div id="profileSection" class="hidden flex items-center space-x-3">
+                        <div class="text-right hidden md:block">
+                            <p id="userName" class="text-sm font-medium text-gray-900">Loading...</p>
+                            <p id="userMajor" class="text-xs text-gray-500">Computer Science</p>
+                        </div>
+                        <div class="relative">
+                            <img 
+                                id="userAvatar"
+                                src="https://ui-avatars.com/api/?name=Student&background=4F46E5&color=fff" 
+                                alt="Profile" 
+                                class="w-10 h-10 rounded-full border-2 border-white shadow-sm"
+                            >
+                            <div id="userStatus" class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
+                        </div>
+                        <button id="logoutBtn" class="ml-2 px-3 py-1 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                            Logout
+                        </button>
+                    </div>
+
+                    <!-- Login/Register Buttons (when not logged in) -->
+                    <div id="authButtons" class="flex space-x-2">
+                        <button id="loginBtn" class="px-4 py-2 text-primary border border-primary rounded-lg hover:bg-primary hover:text-white transition-colors">
+                            Login
+                        </button>
+                        <button id="registerBtn" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                            Register
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Mobile Tab Navigation (Visible on mobile when logged in) -->
+    <div id="mobileTabNav" class="mobile-tab-nav hidden bg-white border-b border-gray-200 sticky top-16 z-30">
+        <button data-tab="overview" class="mobile-tab-item active flex flex-col items-center justify-center">
+            <i class="fas fa-home"></i>
+            <span>Overview</span>
+        </button>
+        <button data-tab="courses" class="mobile-tab-item flex flex-col items-center justify-center">
+            <i class="fas fa-book"></i>
+            <span>Courses</span>
+        </button>
+        <button data-tab="assignments" class="mobile-tab-item flex flex-col items-center justify-center">
+            <i class="fas fa-tasks"></i>
+            <span>Assignments</span>
+        </button>
+        <button data-tab="grades" class="mobile-tab-item flex flex-col items-center justify-center">
+            <i class="fas fa-chart-bar"></i>
+            <span>Grades</span>
+        </button>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="flex">
+        <!-- Sidebar (Only visible when logged in on desktop) -->
+        <aside id="sidebar" class="lg:flex flex-col w-64 bg-white border-r border-gray-200 min-h-[calc(100vh-4rem)] sticky top-16 sidebar">
+            <div class="p-6">
+                <div class="mb-8">
+                    <h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">Dashboard</h2>
+                    <nav class="space-y-2">
+                        <a href="#" data-tab="overview" class="tab-btn flex items-center space-x-3 px-3 py-2 text-primary bg-primary/10 rounded-lg font-medium">
+                            <i class="fas fa-home w-5"></i>
+                            <span>Overview</span>
+                        </a>
+                        <a href="#" data-tab="courses" class="tab-btn flex items-center space-x-3 px-3 py-2 text-gray-700 hover:text-primary hover:bg-gray-50 rounded-lg transition-colors">
+                            <i class="fas fa-book w-5"></i>
+                            <span>My Courses</span>
+                        </a>
+                        <a href="#" data-tab="assignments" class="tab-btn flex items-center space-x-3 px-3 py-2 text-gray-700 hover:text-primary hover:bg-gray-50 rounded-lg transition-colors">
+                            <i class="fas fa-tasks w-5"></i>
+                            <span>Assignments</span>
+                        </a>
+                        <a href="#" data-tab="grades" class="tab-btn flex items-center space-x-3 px-3 py-2 text-gray-700 hover:text-primary hover:bg-gray-50 rounded-lg transition-colors">
+                            <i class="fas fa-chart-bar w-5"></i>
+                            <span>Grades</span>
+                        </a>
+                    </nav>
+                </div>
+
+                <div class="bg-gradient-to-r from-primary to-secondary rounded-xl p-4 text-white">
+                    <h3 class="font-semibold mb-2">Upcoming Deadline</h3>
+                    <p id="deadlineTitle" class="text-sm mb-3">No upcoming deadlines</p>
+                    <div class="flex items-center justify-between">
+                        <span id="deadlineTime" class="text-xs"></span>
+                        <button id="viewDeadlineBtn" class="text-xs bg-white text-primary px-3 py-1 rounded-full font-medium hover:bg-gray-100 transition-colors">
+                            View
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-4 md:p-6">
+            <!-- Dashboard Content (Visible when logged in) -->
+            <div id="dashboardContent" class="hidden">
+                <!-- Welcome Section -->
+                <div id="overview" class="tab-content active">
+                    <div class="mb-8">
+                        <div class="flex flex-col md:flex-row md:items-center justify-between mb-6">
+                            <div>
+                                <h2 class="text-2xl font-bold text-gray-900">Welcome back, <span id="displayUserName">Student</span>!</h2>
+                                <p class="text-gray-600">Here's what's happening with your courses today.</p>
+                            </div>
+                            <div class="mt-4 md:mt-0">
+                                <button id="joinCourseBtn" class="bg-primary text-white px-6 py-2 rounded-lg font-medium hover:bg-primary/90 transition-colors flex items-center space-x-2">
+                                    <i class="fas fa-plus"></i>
+                                    <span>Join New Course</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Stats Cards -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-sm text-gray-500">Active Courses</p>
+                                        <p id="activeCoursesCount" class="text-2xl font-bold text-gray-900">0</p>
+                                    </div>
+                                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-book text-blue-600 text-xl"></i>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-sm text-gray-500">Pending Assignments</p>
+                                        <p id="pendingAssignmentsCount" class="text-2xl font-bold text-gray-900">0</p>
+                                    </div>
+                                    <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-tasks text-orange-600 text-xl"></i>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-sm text-gray-500">Average Grade</p>
+                                        <p id="averageGrade" class="text-2xl font-bold text-gray-900">0%</p>
+                                    </div>
+                                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-chart-line text-green-600 text-xl"></i>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-sm text-gray-500">Study Hours</p>
+                                        <p id="studyHours" class="text-2xl font-bold text-gray-900">0</p>
+                                    </div>
+                                    <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-clock text-purple-600 text-xl"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Courses Section -->
+                    <div class="mb-8">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-xl font-bold text-gray-900">My Courses</h3>
+                            <button id="viewAllCourses" class="text-primary hover:text-primary/80 font-medium flex items-center space-x-2">
+                                <span>View All</span>
+                                <i class="fas fa-chevron-right text-sm"></i>
+                            </button>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="coursesContainer">
+                            <!-- Course cards will be populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Other Tab Contents -->
+                <div id="courses" class="tab-content">
+                    <div class="p-4 md:p-8">
+                        <h2 class="text-2xl font-bold text-gray-900 mb-6">My Courses</h2>
+                        <div id="allCoursesList"></div>
+                    </div>
+                </div>
+
+                <div id="assignments" class="tab-content">
+                    <div class="p-4 md:p-8">
+                        <h2 class="text-2xl font-bold text-gray-900 mb-6">Assignments</h2>
+                        <div id="allAssignmentsList"></div>
+                    </div>
+                </div>
+
+                <div id="grades" class="tab-content">
+                    <div class="p-4 md:p-8">
+                        <h2 class="text-2xl font-bold text-gray-900 mb-6">Grades</h2>
+                        <div id="gradesList"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Welcome Screen (Visible when not logged in) -->
+            <div id="welcomeScreen" class="flex flex-col items-center justify-center min-h-[70vh]">
+                <div class="text-center max-w-2xl">
+                    <div class="w-24 h-24 bg-primary rounded-full flex items-center justify-center mx-auto mb-8">
+                        <i class="fas fa-graduation-cap text-white text-4xl"></i>
+                    </div>
+                    <h1 class="text-4xl font-bold text-gray-900 mb-4">Welcome to EduLearn</h1>
+                    <p class="text-xl text-gray-600 mb-8">Your modern learning management system for academic success.</p>
+                    <p class="text-gray-500 mb-10">Join thousands of students managing their courses, assignments, and grades in one place.</p>
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                        <button id="welcomeLoginBtn" class="px-8 py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors text-lg">
+                            <i class="fas fa-sign-in-alt mr-2"></i>Login
+                        </button>
+                        <button id="welcomeRegisterBtn" class="px-8 py-3 border-2 border-primary text-primary rounded-lg font-medium hover:bg-primary/5 transition-colors text-lg">
+                            <i class="fas fa-user-plus mr-2"></i>Register
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Auth Modal -->
+    <div id="authModal" class="modal">
+        <div class="bg-white rounded-xl shadow-lg p-8 max-w-md w-full mx-4">
+            <div class="flex justify-between items-center mb-6">
+                <h3 id="modalTitle" class="text-2xl font-bold text-gray-900">Login</h3>
+                <button id="closeModal" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <!-- Login Form -->
+            <form id="loginForm" class="space-y-4">
+                <div>
+                    <label class="block text-gray-700 text-sm font-medium mb-2" for="loginEmail">
+                        Email Address
+                    </label>
+                    <input type="email" id="loginEmail" required
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
+                </div>
+                <div>
+                    <label class="block text-gray-700 text-sm font-medium mb-2" for="loginPassword">
+                        Password
+                    </label>
+                    <input type="password" id="loginPassword" required minlength="6"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
+                </div>
+                <button type="submit" id="loginSubmitBtn"
+                    class="w-full bg-primary text-white py-3 rounded-lg font-medium hover:bg-primary/90 transition-colors flex items-center justify-center">
+                    <span id="loginText">Login</span>
+                    <i id="loginSpinner" class="fas fa-spinner fa-spin ml-2 hidden"></i>
+                </button>
+                
+                <div class="relative my-6">
+                    <div class="absolute inset-0 flex items-center">
+                        <div class="w-full border-t border-gray-300"></div>
+                    </div>
+                    <div class="relative flex justify-center text-sm">
+                        <span class="px-2 bg-white text-gray-500">Or continue with</span>
+                    </div>
+                </div>
+                
+                <button type="button" id="googleLoginBtn" 
+                    class="w-full btn-google py-3 rounded-lg font-medium flex items-center justify-center space-x-3 hover:shadow-sm transition-shadow">
+                    <i class="fab fa-google"></i>
+                    <span>Sign in with Google</span>
+                </button>
+                
+                <div class="text-center mt-4">
+                    <p class="text-gray-600">
+                        Don't have an account? 
+                        <button type="button" id="switchToRegister" class="text-primary hover:text-primary/80 font-medium">
+                            Sign up
+                        </button>
+                    </p>
+                </div>
+            </form>
+
+            <!-- Register Form -->
+            <form id="registerForm" class="space-y-4 hidden">
+                <!-- Role Selection Section -->
+                <div class="mb-4">
+                    <label class="block text-gray-700 font-medium mb-3">Account Type</label>
+                    <div class="grid grid-cols-3 gap-3">
+                        <div class="role-option border-2 border-primary bg-primary/5 rounded-lg p-3 text-center cursor-pointer transition-all" data-role="student">
+                            <i class="fas fa-user-graduate text-2xl text-primary mb-2"></i>
+                            <h4 class="font-medium text-sm">Student</h4>
+                            <p class="text-xs text-gray-500 mt-1">Enroll in courses</p>
+                        </div>
+                        
+                        <div class="role-option border-2 border-gray-200 rounded-lg p-3 text-center cursor-pointer hover:border-secondary hover:bg-secondary/5 transition-all" data-role="instructor">
+                            <i class="fas fa-chalkboard-teacher text-2xl text-secondary mb-2"></i>
+                            <h4 class="font-medium text-sm">Instructor</h4>
+                            <p class="text-xs text-gray-500 mt-1">Create courses</p>
+                        </div>
+                        
+                        <div class="role-option border-2 border-gray-200 rounded-lg p-3 text-center cursor-pointer hover:border-accent hover:bg-accent/5 transition-all" data-role="admin">
+                            <i class="fas fa-cog text-2xl text-accent mb-2"></i>
+                            <h4 class="font-medium text-sm">Admin</h4>
+                            <p class="text-xs text-gray-500 mt-1">Manage system</p>
+                        </div>
+                    </div>
+                    <input type="hidden" id="registerRole" name="role" value="student" required>
+                </div>
+
+                <!-- Existing form fields -->
+                <div>
+                    <label class="block text-gray-700 text-sm font-medium mb-2" for="registerName">
+                        Full Name
+                    </label>
+                    <input type="text" id="registerName" required
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
+                </div>
+                <div>
+                    <label class="block text-gray-700 text-sm font-medium mb-2" for="registerEmail">
+                        Email Address
+                    </label>
+                    <input type="email" id="registerEmail" required
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
+                </div>
+                <div>
+                    <label class="block text-gray-700 text-sm font-medium mb-2" for="registerPassword">
+                        Password
+                    </label>
+                    <input type="password" id="registerPassword" required minlength="6"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
+                    <p class="text-xs text-gray-500 mt-1">Minimum 6 characters</p>
+                </div>
+                <div>
+                    <label class="block text-gray-700 text-sm font-medium mb-2" for="registerConfirmPassword">
+                        Confirm Password
+                    </label>
+                    <input type="password" id="registerConfirmPassword" required minlength="6"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
+                </div>
+                <div>
+                    <label class="block text-gray-700 text-sm font-medium mb-2" for="registerMajor">
+                        Major/Department
+                    </label>
+                    <select id="registerMajor" required
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
+                        <option value="">Select your major</option>
+                        <option value="Computer Science">Computer Science</option>
+                        <option value="Engineering">Engineering</option>
+                        <option value="Business">Business</option>
+                        <option value="Medicine">Medicine</option>
+                        <option value="Arts">Arts</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <button type="submit" id="registerSubmitBtn"
+                    class="w-full bg-primary text-white py-3 rounded-lg font-medium hover:bg-primary/90 transition-colors flex items-center justify-center">
+                    <span id="registerText">Create Account</span>
+                    <i id="registerSpinner" class="fas fa-spinner fa-spin ml-2 hidden"></i>
+                </button>
+                <div class="text-center mt-4">
+                    <p class="text-gray-600">
+                        Already have an account? 
+                        <button type="button" id="switchToLogin" class="text-primary hover:text-primary/80 font-medium">
+                            Login
+                        </button>
+                    </p>
+                    <button type="button" id="googleRegisterBtn" 
+                        class="w-full btn-google py-3 rounded-lg font-medium flex items-center justify-center space-x-3 hover:shadow-sm transition-shadow mt-4">
+                        <i class="fab fa-google"></i>
+                        <span>Sign up with Google</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Firebase Configuration and App Logic -->
+    <script src="js/app.js" defer></script>
+</body>
+</html>

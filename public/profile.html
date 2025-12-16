@@ -1,0 +1,318 @@
+<!-- User Profile Page -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile - EduLMS</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-light">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-md sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <i class="fas fa-book text-primary text-2xl"></i>
+                <h1 class="text-xl font-bold text-dark">EduLMS</h1>
+            </div>
+            <div class="flex items-center gap-4">
+                <a href="index.html" class="text-gray-600 hover:text-primary flex items-center gap-2">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
+                <button id="logoutBtn" class="bg-accent text-white px-4 py-2 rounded-lg hover:bg-opacity-90">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-4xl mx-auto px-4 py-8">
+        <!-- Profile Header -->
+        <div class="bg-white rounded-lg shadow-lg mb-8">
+            <div class="h-32 bg-gradient-to-r from-primary to-secondary rounded-t-lg"></div>
+            
+            <div class="px-8 pb-8">
+                <div class="flex flex-col md:flex-row gap-6 -mt-16 mb-6">
+                    <div class="relative">
+                        <img id="profileAvatar" src="https://via.placeholder.com/150" alt="Profile" class="w-32 h-32 rounded-full border-4 border-white shadow-lg object-cover">
+                        <button id="uploadAvatarBtn" class="absolute bottom-0 right-0 bg-primary text-white rounded-full p-3 hover:bg-opacity-90">
+                            <i class="fas fa-camera"></i>
+                        </button>
+                        <input type="file" id="avatarInput" class="hidden" accept="image/*">
+                    </div>
+
+                    <div class="flex-1 flex flex-col justify-end">
+                        <h2 id="profileName" class="text-3xl font-bold text-dark">John Doe</h2>
+                        <p id="profileEmail" class="text-gray-600">john@example.com</p>
+                        <p id="profileRole" class="text-sm text-primary font-semibold mt-2">Student</p>
+                    </div>
+
+                    <div class="flex flex-col gap-2">
+                        <button id="editProfileBtn" class="bg-primary text-white px-6 py-2 rounded-lg hover:bg-opacity-90 flex items-center justify-center gap-2">
+                            <i class="fas fa-edit"></i> Edit Profile
+                        </button>
+                        <button id="changePasswordBtn" class="bg-secondary text-white px-6 py-2 rounded-lg hover:bg-opacity-90 flex items-center justify-center gap-2">
+                            <i class="fas fa-key"></i> Change Password
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Quick Stats -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="bg-light p-4 rounded-lg text-center">
+                        <i class="fas fa-book text-primary text-2xl mb-2"></i>
+                        <p class="text-2xl font-bold text-dark" id="enrolledCoursesCount">0</p>
+                        <p class="text-sm text-gray-600">Courses</p>
+                    </div>
+
+                    <div class="bg-light p-4 rounded-lg text-center">
+                        <i class="fas fa-tasks text-accent text-2xl mb-2"></i>
+                        <p class="text-2xl font-bold text-dark" id="assignmentsCount">0</p>
+                        <p class="text-sm text-gray-600">Assignments</p>
+                    </div>
+
+                    <div class="bg-light p-4 rounded-lg text-center">
+                        <i class="fas fa-star text-yellow-500 text-2xl mb-2"></i>
+                        <p class="text-2xl font-bold text-dark" id="averageGradeCount">0%</p>
+                        <p class="text-sm text-gray-600">Avg Grade</p>
+                    </div>
+
+                    <div class="bg-light p-4 rounded-lg text-center">
+                        <i class="fas fa-fire text-red-500 text-2xl mb-2"></i>
+                        <p class="text-2xl font-bold text-dark" id="streakCount">0</p>
+                        <p class="text-sm text-gray-600">Day Streak</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Profile Tabs -->
+        <div class="bg-white rounded-lg shadow-lg">
+            <div class="flex border-b">
+                <button class="profile-tab-btn active px-6 py-4 font-semibold text-primary border-b-2 border-primary" data-tab="about">
+                    <i class="fas fa-user mr-2"></i> About
+                </button>
+                <button class="profile-tab-btn px-6 py-4 font-semibold text-gray-600 hover:text-primary" data-tab="courses">
+                    <i class="fas fa-book mr-2"></i> Courses
+                </button>
+                <button class="profile-tab-btn px-6 py-4 font-semibold text-gray-600 hover:text-primary" data-tab="achievements">
+                    <i class="fas fa-trophy mr-2"></i> Achievements
+                </button>
+                <button class="profile-tab-btn px-6 py-4 font-semibold text-gray-600 hover:text-primary" data-tab="settings">
+                    <i class="fas fa-cog mr-2"></i> Settings
+                </button>
+            </div>
+
+            <!-- About Tab -->
+            <div id="about-tab" class="profile-tab-content active p-8">
+                <h3 class="text-2xl font-bold mb-6">Personal Information</h3>
+                
+                <div class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block font-semibold text-dark mb-2">First Name</label>
+                            <p id="firstNameDisplay" class="text-gray-700 p-3 bg-light rounded-lg">John</p>
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-dark mb-2">Last Name</label>
+                            <p id="lastNameDisplay" class="text-gray-700 p-3 bg-light rounded-lg">Doe</p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block font-semibold text-dark mb-2">Email</label>
+                        <p id="emailDisplay" class="text-gray-700 p-3 bg-light rounded-lg">john@example.com</p>
+                    </div>
+
+                    <div>
+                        <label class="block font-semibold text-dark mb-2">User Role</label>
+                        <p id="roleDisplay" class="text-gray-700 p-3 bg-light rounded-lg capitalize">Student</p>
+                    </div>
+
+                    <div>
+                        <label class="block font-semibold text-dark mb-2">Institution</label>
+                        <p id="institutionDisplay" class="text-gray-700 p-3 bg-light rounded-lg">MIT</p>
+                    </div>
+
+                    <div>
+                        <label class="block font-semibold text-dark mb-2">Member Since</label>
+                        <p id="memberSinceDisplay" class="text-gray-700 p-3 bg-light rounded-lg">Dec 15, 2025</p>
+                    </div>
+
+                    <div>
+                        <label class="block font-semibold text-dark mb-2">Bio</label>
+                        <p id="bioDisplay" class="text-gray-700 p-3 bg-light rounded-lg italic">No bio added yet</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Courses Tab -->
+            <div id="courses-tab" class="profile-tab-content p-8">
+                <h3 class="text-2xl font-bold mb-6">My Courses</h3>
+
+                <div id="enrolledCoursesList" class="space-y-4">
+                    <!-- Courses will be loaded here -->
+                </div>
+
+                <div id="noCoursesMessage" class="text-center py-12">
+                    <i class="fas fa-book text-6xl text-gray-300 mb-4"></i>
+                    <p class="text-gray-500">You haven't enrolled in any courses yet.</p>
+                </div>
+            </div>
+
+            <!-- Achievements Tab -->
+            <div id="achievements-tab" class="profile-tab-content p-8">
+                <h3 class="text-2xl font-bold mb-6">Achievements & Badges</h3>
+
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    <!-- Achievements will be loaded here -->
+                </div>
+
+                <div id="noAchievementsMessage" class="text-center py-12">
+                    <i class="fas fa-star text-6xl text-gray-300 mb-4"></i>
+                    <p class="text-gray-500">Keep learning to unlock achievements!</p>
+                </div>
+            </div>
+
+            <!-- Settings Tab -->
+            <div id="settings-tab" class="profile-tab-content p-8">
+                <h3 class="text-2xl font-bold mb-6">Preferences</h3>
+
+                <div class="space-y-6 max-w-2xl">
+                    <div class="flex items-center justify-between p-4 bg-light rounded-lg">
+                        <div>
+                            <p class="font-semibold text-dark">Email Notifications</p>
+                            <p class="text-sm text-gray-600">Receive email updates about courses and assignments</p>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="emailNotificationsToggle" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="flex items-center justify-between p-4 bg-light rounded-lg">
+                        <div>
+                            <p class="font-semibold text-dark">Push Notifications</p>
+                            <p class="text-sm text-gray-600">Receive in-app notifications</p>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="pushNotificationsToggle" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="flex items-center justify-between p-4 bg-light rounded-lg">
+                        <div>
+                            <p class="font-semibold text-dark">Dark Mode</p>
+                            <p class="text-sm text-gray-600">Use dark theme for the application</p>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="darkModeToggle">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <hr>
+
+                    <div>
+                        <h4 class="font-semibold text-dark mb-4">Danger Zone</h4>
+                        <button id="deleteAccountBtn" class="w-full bg-red-500 text-white px-6 py-3 rounded-lg hover:bg-red-600 flex items-center justify-center gap-2">
+                            <i class="fas fa-trash"></i> Delete Account
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Profile Modal -->
+    <div id="editProfileModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold">Edit Profile</h3>
+                <button class="profile-modal-close text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+
+            <form id="editProfileForm" class="space-y-4">
+                <div>
+                    <label class="block font-semibold mb-2">First Name</label>
+                    <input type="text" id="editFirstName" required class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
+                </div>
+
+                <div>
+                    <label class="block font-semibold mb-2">Last Name</label>
+                    <input type="text" id="editLastName" required class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
+                </div>
+
+                <div>
+                    <label class="block font-semibold mb-2">Institution</label>
+                    <input type="text" id="editInstitution" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
+                </div>
+
+                <div>
+                    <label class="block font-semibold mb-2">Bio</label>
+                    <textarea id="editBio" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" rows="4" placeholder="Tell us about yourself..."></textarea>
+                </div>
+
+                <div class="flex gap-4 pt-6">
+                    <button type="button" class="profile-modal-close flex-1 px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+                    <button type="submit" class="flex-1 bg-primary text-white px-4 py-2 rounded-lg hover:bg-opacity-90">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div id="changePasswordModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold">Change Password</h3>
+                <button class="profile-modal-close text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+
+            <form id="changePasswordForm" class="space-y-4">
+                <div>
+                    <label class="block font-semibold mb-2">Current Password</label>
+                    <input type="password" id="currentPassword" required class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
+                </div>
+
+                <div>
+                    <label class="block font-semibold mb-2">New Password</label>
+                    <input type="password" id="newPassword" required class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" minlength="6">
+                </div>
+
+                <div>
+                    <label class="block font-semibold mb-2">Confirm Password</label>
+                    <input type="password" id="confirmNewPassword" required class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" minlength="6">
+                </div>
+
+                <div class="flex gap-4 pt-6">
+                    <button type="button" class="profile-modal-close flex-1 px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+                    <button type="submit" class="flex-1 bg-primary text-white px-4 py-2 rounded-lg hover:bg-opacity-90">Change Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="firebase-config.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/authManager.js"></script>
+    <script src="js/dataManager.js"></script>
+    <script src="js/uiManager.js"></script>
+    <script src="js/profileManager.js"></script>
+</body>
+</html>
