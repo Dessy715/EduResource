@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gradebook - EduLMS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/papaparse/5.4.1/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation Bar -->
+    <nav class="bg-white shadow-sm sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-3">
+                    <i class="fas fa-graduation-cap text-blue-600 text-2xl"></i>
+                    <span class="text-xl font-bold text-gray-800">EduLMS</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button id="backBtn" class="text-gray-600 hover:text-gray-900 flex items-center space-x-1">
+                        <i class="fas fa-arrow-left"></i>
+                        <span>Back</span>
+                    </button>
+                    <button id="userMenuBtn" class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 text-white flex items-center justify-center hover:shadow-lg transition">
+                        <i class="fas fa-user"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">Gradebook</h1>
+            <p class="text-gray-600 mt-2">View and export student grades</p>
+        </div>
+
+        <!-- Controls -->
+        <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <!-- Course Filter -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Select Course</label>
+                    <select id="courseFilter" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">All Courses</option>
+                        <!-- Options will be populated -->
+                    </select>
+                </div>
+
+                <!-- Grade Filter -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Grade Range</label>
+                    <select id="gradeFilter" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">All Grades</option>
+                        <option value="A">A (90-100)</option>
+                        <option value="B">B (80-89)</option>
+                        <option value="C">C (70-79)</option>
+                        <option value="D">D (60-69)</option>
+                        <option value="F">F (Below 60)</option>
+                    </select>
+                </div>
+
+                <!-- Sort By -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
+                    <select id="sortBy" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="name">Student Name</option>
+                        <option value="grade">Grade (High to Low)</option>
+                        <option value="submitted">Submission Date</option>
+                    </select>
+                </div>
+
+                <!-- Export Buttons -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Export</label>
+                    <div class="flex space-x-2">
+                        <button id="exportCSV" class="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm">
+                            <i class="fas fa-download mr-1"></i>CSV
+                        </button>
+                        <button id="exportPDF" class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm">
+                            <i class="fas fa-file-pdf mr-1"></i>PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <p class="text-gray-600 text-sm">Average Grade</p>
+                <p id="averageGrade" class="text-3xl font-bold text-blue-600 mt-2">--</p>
+            </div>
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <p class="text-gray-600 text-sm">Highest Grade</p>
+                <p id="highestGrade" class="text-3xl font-bold text-green-600 mt-2">--</p>
+            </div>
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <p class="text-gray-600 text-sm">Lowest Grade</p>
+                <p id="lowestGrade" class="text-3xl font-bold text-red-600 mt-2">--</p>
+            </div>
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <p class="text-gray-600 text-sm">Students Graded</p>
+                <p id="gradedCount" class="text-3xl font-bold text-purple-600 mt-2">0</p>
+            </div>
+        </div>
+
+        <!-- Gradebook Table -->
+        <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50 border-b border-gray-200">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Student</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Email</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Course</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Grade</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Letter Grade</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Submitted</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="gradesTable" class="divide-y divide-gray-200">
+                        <!-- Grades will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <div class="mt-6 flex items-center justify-between">
+            <p id="pageInfo" class="text-gray-600 text-sm">Showing results</p>
+            <div class="space-x-2">
+                <button id="prevPage" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                    <i class="fas fa-chevron-left mr-2"></i>Previous
+                </button>
+                <button id="nextPage" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                    Next<i class="fas fa-chevron-right ml-2"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grade Details Modal -->
+    <div id="gradeModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl max-w-lg w-full mx-4">
+            <div class="p-6 border-b border-gray-200">
+                <h2 class="text-xl font-bold text-gray-900">Grade Details</h2>
+            </div>
+
+            <div id="gradeModalContent" class="p-6">
+                <!-- Content will be populated -->
+            </div>
+
+            <div class="p-6 border-t border-gray-200 flex justify-end">
+                <button id="closeGradeModal" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="hidden fixed bottom-4 right-4 bg-gray-900 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 z-50">
+        <i id="toastIcon" class="fas fa-check-circle"></i>
+        <span id="toastMessage">Success</span>
+    </div>
+
+    <script src="firebase-config.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/gradebook.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

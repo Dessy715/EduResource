@@ -1,0 +1,8 @@
+{
+  "name": "EduLMS",
+  "version": "1.0.0",
+  "description": "Student Learning Management System",
+  "scripts": {
+    "deploy": "firebase deploy --only hosting"
+  }
+}

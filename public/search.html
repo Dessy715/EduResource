@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search - EduLMS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation Bar -->
+    <nav class="bg-white shadow-sm sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-3">
+                    <i class="fas fa-graduation-cap text-blue-600 text-2xl"></i>
+                    <span class="text-xl font-bold text-gray-800">EduLMS</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button id="backBtn" class="text-gray-600 hover:text-gray-900">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                    <button id="userMenuBtn" class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 text-white flex items-center justify-center hover:shadow-lg transition">
+                        <i class="fas fa-user"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-5xl mx-auto px-4 py-12">
+        <!-- Search Header -->
+        <div class="mb-12">
+            <h1 class="text-4xl font-bold text-gray-900 mb-4">Search EduLMS</h1>
+            <p class="text-gray-600 text-lg">Find courses, assignments, users, and more</p>
+        </div>
+
+        <!-- Search Box -->
+        <div class="bg-white rounded-lg shadow-sm p-6 mb-8">
+            <div class="relative">
+                <i class="fas fa-search absolute left-4 top-4 text-gray-400 text-lg"></i>
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    class="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg" 
+                    placeholder="Search courses, assignments, users...">
+            </div>
+
+            <!-- Filter Options -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+                <label class="flex items-center space-x-2 cursor-pointer">
+                    <input type="checkbox" class="filter-checkbox" data-filter="courses" checked>
+                    <span class="text-gray-700">Courses</span>
+                </label>
+                <label class="flex items-center space-x-2 cursor-pointer">
+                    <input type="checkbox" class="filter-checkbox" data-filter="assignments" checked>
+                    <span class="text-gray-700">Assignments</span>
+                </label>
+                <label class="flex items-center space-x-2 cursor-pointer">
+                    <input type="checkbox" class="filter-checkbox" data-filter="users" checked>
+                    <span class="text-gray-700">Users</span>
+                </label>
+                <label class="flex items-center space-x-2 cursor-pointer">
+                    <input type="checkbox" class="filter-checkbox" data-filter="materials" checked>
+                    <span class="text-gray-700">Materials</span>
+                </label>
+            </div>
+        </div>
+
+        <!-- Search Results -->
+        <div id="resultsContainer" class="hidden">
+            <!-- Courses Results -->
+            <div id="coursesResults" class="hidden mb-8">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-2xl font-bold text-gray-900">Courses</h2>
+                    <span id="coursesCount" class="text-sm text-gray-600">0 results</span>
+                </div>
+                <div id="coursesList" class="space-y-4">
+                    <!-- Courses will be listed here -->
+                </div>
+            </div>
+
+            <!-- Assignments Results -->
+            <div id="assignmentsResults" class="hidden mb-8">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-2xl font-bold text-gray-900">Assignments</h2>
+                    <span id="assignmentsCount" class="text-sm text-gray-600">0 results</span>
+                </div>
+                <div id="assignmentsList" class="space-y-4">
+                    <!-- Assignments will be listed here -->
+                </div>
+            </div>
+
+            <!-- Users Results -->
+            <div id="usersResults" class="hidden mb-8">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-2xl font-bold text-gray-900">Users</h2>
+                    <span id="usersCount" class="text-sm text-gray-600">0 results</span>
+                </div>
+                <div id="usersList" class="space-y-4">
+                    <!-- Users will be listed here -->
+                </div>
+            </div>
+
+            <!-- Materials Results -->
+            <div id="materialsResults" class="hidden mb-8">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-2xl font-bold text-gray-900">Course Materials</h2>
+                    <span id="materialsCount" class="text-sm text-gray-600">0 results</span>
+                </div>
+                <div id="materialsList" class="space-y-4">
+                    <!-- Materials will be listed here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="text-center py-12">
+            <i class="fas fa-search text-6xl text-gray-300 mb-4"></i>
+            <h3 class="text-2xl font-bold text-gray-900 mb-2">Start Searching</h3>
+            <p class="text-gray-600">Enter keywords above to find courses, assignments, and more</p>
+        </div>
+
+        <!-- No Results State -->
+        <div id="noResultsState" class="hidden text-center py-12">
+            <i class="fas fa-inbox text-6xl text-gray-300 mb-4"></i>
+            <h3 class="text-2xl font-bold text-gray-900 mb-2">No Results Found</h3>
+            <p class="text-gray-600">Try different keywords or adjust your filters</p>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="hidden fixed bottom-4 right-4 bg-gray-900 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 z-50">
+        <i id="toastIcon" class="fas fa-check-circle"></i>
+        <span id="toastMessage">Success</span>
+    </div>
+
+    <script src="firebase-config.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/search.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

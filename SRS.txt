@@ -1,0 +1,910 @@
+# Software Requirements Specification (SRS)
+## EduLMS - Student Learning Management System
+
+**Version:** 1.0.0  
+**Date:** December 16, 2025  
+**Prepared by:** EduLMS Development Team  
+**Project Status:** Production Ready
+
+---
+
+## Table of Contents
+
+1. [Introduction](#1-introduction)
+2. [Overall Description](#2-overall-description)
+3. [System Features](#3-system-features)
+4. [External Interface Requirements](#4-external-interface-requirements)
+5. [System Requirements](#5-system-requirements)
+6. [Non-Functional Requirements](#6-non-functional-requirements)
+7. [Appendices](#7-appendices)
+
+---
+
+## 1. Introduction
+
+### 1.1 Purpose
+
+This Software Requirements Specification (SRS) document provides a complete description of the EduLMS (Educational Learning Management System). It details the functional and non-functional requirements for students, instructors, and administrators to manage online courses, assignments, grades, and educational content.
+
+### 1.2 Document Conventions
+
+- **Priority Levels:**
+  - **High:** Critical functionality required for system operation
+  - **Medium:** Important features that enhance usability
+  - **Low:** Nice-to-have features for future releases
+
+- **Requirement IDs:** Format FR-XXX (Functional) and NFR-XXX (Non-Functional)
+
+### 1.3 Intended Audience
+
+- **Developers:** Implementation reference and technical specifications
+- **Project Managers:** Project planning and milestone tracking
+- **QA Testers:** Test case development and validation criteria
+- **Stakeholders:** Understanding system capabilities and limitations
+- **End Users:** Feature expectations and system behavior
+
+### 1.4 Product Scope
+
+EduLMS is a web-based learning management system designed to:
+- Facilitate online course delivery and management
+- Enable assignment submission and grading workflows
+- Track student progress and performance analytics
+- Provide role-based access for students, instructors, and administrators
+- Support real-time collaboration and communication
+
+**Key Benefits:**
+- Centralized learning platform accessible 24/7
+- Reduced administrative overhead through automation
+- Enhanced student engagement through interactive features
+- Data-driven insights for academic performance improvement
+
+### 1.5 References
+
+- IEEE Std 830-1998: IEEE Recommended Practice for Software Requirements Specifications
+- Firebase Documentation: https://firebase.google.com/docs
+- Tailwind CSS Documentation: https://tailwindcss.com/docs
+- Web Content Accessibility Guidelines (WCAG) 2.1
+
+---
+
+## 2. Overall Description
+
+### 2.1 Product Perspective
+
+EduLMS is a standalone web application that integrates with:
+- **Firebase Authentication:** User identity management
+- **Cloud Firestore:** NoSQL database for real-time data storage
+- **Firebase Hosting:** Cloud-based web hosting service
+- **Browser APIs:** Local storage, notifications, geolocation
+
+**System Architecture:**
+```
+┌─────────────┐     ┌──────────────┐     ┌─────────────┐
+│   Client    │────▶│   Firebase   │────▶│  Firestore  │
+│  (Browser)  │◀────│     Auth     │◀────│  Database   │
+└─────────────┘     └──────────────┘     └─────────────┘
+```
+
+### 2.2 Product Functions
+
+**Primary Functions:**
+1. **User Management:** Registration, authentication, profile management
+2. **Course Management:** Course creation, enrollment, content delivery
+3. **Assignment Management:** Creation, submission, grading, feedback
+4. **Grade Management:** Grade calculation, reporting, analytics
+5. **Progress Tracking:** Course completion, module progress, statistics
+6. **Communication:** Announcements, notifications, messaging (future)
+
+### 2.3 User Classes and Characteristics
+
+#### 2.3.1 Students
+- **Technical Expertise:** Basic to intermediate computer skills
+- **Frequency of Use:** Daily to weekly
+- **Primary Tasks:** View courses, submit assignments, check grades
+- **Access Level:** Read-only for courses, write for submissions
+
+#### 2.3.2 Instructors
+- **Technical Expertise:** Intermediate computer skills
+- **Frequency of Use:** Daily
+- **Primary Tasks:** Create courses, grade assignments, manage content
+- **Access Level:** Full CRUD operations for owned courses
+
+#### 2.3.3 Administrators
+- **Technical Expertise:** Advanced technical skills
+- **Frequency of Use:** Daily
+- **Primary Tasks:** User management, system configuration, reporting
+- **Access Level:** Full system access and control
+
+### 2.4 Operating Environment
+
+**Client-Side Requirements:**
+- Modern web browser (Chrome 90+, Firefox 88+, Safari 14+, Edge 90+)
+- JavaScript enabled
+- Minimum screen resolution: 320px width (mobile-first)
+- Internet connection: 1 Mbps minimum
+
+**Server-Side Environment:**
+- Firebase Hosting infrastructure
+- Cloud Firestore (NoSQL database)
+- Firebase Authentication service
+- HTTPS encryption enforced
+
+### 2.5 Design and Implementation Constraints
+
+**Technical Constraints:**
+- Must use Firebase as backend infrastructure
+- Client-side application (no custom server)
+- Browser localStorage limited to 5-10MB
+- Firestore document size limit: 1MB
+- Real-time listeners limited by Firebase quotas
+
+**Regulatory Constraints:**
+- GDPR compliance for user data
+- FERPA compliance for educational records
+- COPPA compliance for users under 13
+- Accessibility standards (WCAG 2.1 Level AA)
+
+**Business Constraints:**
+- Firebase free tier limitations (Spark Plan)
+- No offline-first functionality in v1.0
+- Budget constraints for third-party services
+
+### 2.6 Assumptions and Dependencies
+
+**Assumptions:**
+- Users have stable internet connectivity
+- Users accept cookies for authentication
+- Instructors have appropriate content creation skills
+- Educational institutions provide course content
+
+**Dependencies:**
+- Firebase platform availability (99.95% SLA)
+- Browser compatibility with ES6+ JavaScript
+- Third-party CDN availability for libraries
+- Email service for notifications
+
+---
+
+## 3. System Features
+
+### 3.1 User Authentication and Authorization
+
+**Priority:** High  
+**ID:** FR-001
+
+#### 3.1.1 Description
+Secure user authentication system supporting multiple login methods with role-based access control.
+
+#### 3.1.2 Functional Requirements
+
+**FR-001-01:** Email/Password Authentication
+- Users shall register using email and password
+- Password must be minimum 8 characters with complexity requirements
+- System shall validate email format before registration
+- System shall send verification email upon registration
+
+**FR-001-02:** Google OAuth Integration
+- Users shall sign in using Google account
+- System shall retrieve profile information (name, email, photo)
+- System shall create user profile automatically on first login
+
+**FR-001-03:** Role-Based Access Control (RBAC)
+- System shall assign one role per user: Student, Instructor, or Admin
+- System shall restrict feature access based on user role
+- System shall enforce role validation on all protected routes
+
+**FR-001-04:** Session Management
+- System shall maintain user session for 7 days
+- System shall provide logout functionality
+- System shall automatically redirect unauthenticated users to login
+
+**FR-001-05:** Password Recovery
+- Users shall request password reset via email
+- System shall send secure reset link valid for 1 hour
+- Users shall set new password after verification
+
+#### 3.1.3 Priority Justification
+Authentication is critical for security, data privacy, and personalized user experiences.
+
+---
+
+### 3.2 Dashboard and Analytics
+
+**Priority:** High  
+**ID:** FR-002
+
+#### 3.2.1 Description
+Personalized dashboard displaying key metrics, upcoming deadlines, and course progress.
+
+#### 3.2.2 Functional Requirements
+
+**FR-002-01:** Student Dashboard
+- Display enrolled course count and progress
+- Show upcoming assignment deadlines (next 7 days)
+- Display current GPA and performance metrics
+- Show total study hours and activity statistics
+
+**FR-002-02:** Quick Access Widgets
+- Recent activity feed (last 10 actions)
+- Course progress bars with percentage completion
+- Assignment status indicators (pending, completed, graded)
+- Grade distribution charts
+
+**FR-002-03:** Instructor Dashboard (Future)
+- Display total students across all courses
+- Show assignment grading queue count
+- Display course analytics and engagement metrics
+
+**FR-002-04:** Customizable Layout (Future)
+- Users shall rearrange dashboard widgets
+- Users shall hide/show specific information panels
+
+---
+
+### 3.3 Course Management
+
+**Priority:** High  
+**ID:** FR-003
+
+#### 3.3.1 Description
+Comprehensive course creation, enrollment, and content delivery system.
+
+#### 3.3.2 Functional Requirements
+
+**FR-003-01:** Course Creation (Instructor)
+- Instructors shall create courses with title, code, description
+- Instructors shall add course icon/thumbnail
+- Instructors shall set course category and difficulty level
+- System shall automatically assign instructor as course owner
+
+**FR-003-02:** Course Enrollment (Student)
+- Students shall browse available courses
+- Students shall enroll in courses with one click
+- System shall update enrolled courses list immediately
+- Students shall see enrollment confirmation
+
+**FR-003-03:** Course Content Structure
+- Courses shall contain multiple modules (lessons)
+- Each module shall support: videos, documents, quizzes, assignments
+- Modules shall be sequentially numbered
+- Modules can be marked as mandatory or optional
+
+**FR-003-04:** Course Viewing
+- Students shall view course overview and syllabus
+- Students shall see course statistics (students, rating, modules)
+- Students shall access all course materials in one view
+- Students shall track module completion status
+
+**FR-003-05:** Course Search and Filtering
+- Users shall search courses by title, code, or instructor
+- Users shall filter by category, difficulty, rating
+- System shall display search results in real-time
+
+**FR-003-06:** Course Progress Tracking
+- System shall calculate progress as (completed modules / total modules)
+- System shall update progress in real-time as modules complete
+- Progress shall be visible on dashboard and course cards
+
+---
+
+### 3.4 Assignment Management
+
+**Priority:** High  
+**ID:** FR-004
+
+#### 3.4.1 Description
+Complete assignment lifecycle management from creation through grading.
+
+#### 3.4.2 Functional Requirements
+
+**FR-004-01:** Assignment Creation (Instructor)
+- Instructors shall create assignments with title and description
+- Instructors shall set due date and time
+- Instructors shall specify maximum points/grade
+- Instructors shall attach files or external links
+- Instructors shall set submission type (file, text, link)
+
+**FR-004-02:** Assignment Listing (Student)
+- Students shall view all assignments for enrolled courses
+- System shall separate pending and completed assignments
+- System shall highlight overdue assignments in red
+- System shall display days/hours until deadline
+
+**FR-004-03:** Assignment Submission (Student)
+- Students shall submit assignments before deadline
+- Students shall upload files (PDF, DOCX, images)
+- Students shall add text submissions or URLs
+- System shall timestamp all submissions
+- Students shall edit submissions before deadline
+
+**FR-004-04:** Late Submission Policy
+- System shall mark submissions after deadline as "Late"
+- Instructors can enable/disable late submissions per assignment
+- System shall display late penalty if applicable
+
+**FR-004-05:** Assignment Grading (Instructor)
+- Instructors shall view all submissions per assignment
+- Instructors shall assign numerical grades
+- Instructors shall provide written feedback
+- System shall notify students when grades are published
+
+**FR-004-06:** Grade Visibility
+- Students shall view graded assignments immediately
+- Students shall see grade, feedback, and submission date
+- Students shall download graded files if attached
+
+---
+
+### 3.5 Grade Management and Reporting
+
+**Priority:** Medium  
+**ID:** FR-005
+
+#### 3.5.1 Description
+Comprehensive grade calculation, display, and academic performance analytics.
+
+#### 3.5.2 Functional Requirements
+
+**FR-005-01:** Grade Calculation
+- System shall calculate course grade as weighted average of assignments
+- System shall convert numerical grades to letter grades (A, B, C, D, F)
+- System shall calculate cumulative GPA across all courses
+- GPA scale: A=4.0, B=3.0, C=2.0, D=1.0, F=0.0
+
+**FR-005-02:** Grade Display
+- Students shall view grades for all enrolled courses
+- Students shall see overall GPA on dashboard
+- Students shall view detailed grade breakdown per course
+- System shall display grade trends over time
+
+**FR-005-03:** Grade Reports (Student)
+- Students shall generate PDF transcript
+- Report shall include: student info, courses, grades, GPA
+- System shall include grade distribution chart
+
+**FR-005-04:** Instructor Gradebook (Future)
+- Instructors shall view all student grades in spreadsheet view
+- Instructors shall export grades to CSV
+- Instructors shall apply curve to grades
+
+---
+
+### 3.6 User Profile Management
+
+**Priority:** Medium  
+**ID:** FR-006
+
+#### 3.6.1 Description
+User profile creation, editing, and preference management.
+
+#### 3.6.2 Functional Requirements
+
+**FR-006-01:** Profile Information
+- Users shall set profile photo (upload or Google profile)
+- Users shall edit name, email, bio, major
+- Students shall set graduation year
+- Instructors shall add credentials and department
+
+**FR-006-02:** Account Settings
+- Users shall change password
+- Users shall enable/disable email notifications
+- Users shall set timezone preference
+- Users shall delete account with confirmation
+
+**FR-006-03:** Privacy Settings
+- Users shall control profile visibility (public/private)
+- Students shall hide/show grades from other students
+- Users shall manage third-party data sharing preferences
+
+---
+
+### 3.7 Notification System
+
+**Priority:** Medium  
+**ID:** FR-007
+
+#### 3.7.1 Description
+Real-time and email notifications for important events.
+
+#### 3.7.2 Functional Requirements
+
+**FR-007-01:** In-App Notifications
+- System shall notify users of new assignments
+- System shall notify students when grades are published
+- System shall notify of upcoming assignment deadlines (24h before)
+- Users shall see notification badge count
+
+**FR-007-02:** Email Notifications
+- System shall send email for assignment due in 24 hours
+- System shall email grade publication notifications
+- System shall send course enrollment confirmations
+- Users shall configure email preferences
+
+**FR-007-03:** Notification Management
+- Users shall mark notifications as read/unread
+- Users shall clear all notifications
+- System shall auto-delete notifications after 30 days
+
+---
+
+### 3.8 Search and Filter
+
+**Priority:** Low  
+**ID:** FR-008
+
+#### 3.8.1 Description
+Global search functionality across courses, assignments, and content.
+
+#### 3.8.2 Functional Requirements
+
+**FR-008-01:** Global Search
+- Users shall search across all accessible content
+- Search shall include: courses, assignments, modules, announcements
+- System shall highlight matching terms in results
+- System shall display search suggestions as user types
+
+**FR-008-02:** Advanced Filters
+- Users shall filter results by date range
+- Users shall filter by content type
+- Users shall sort results by relevance or date
+
+---
+
+### 3.9 Responsive Design
+
+**Priority:** High  
+**ID:** FR-009
+
+#### 3.9.1 Description
+Mobile-first responsive design supporting all device sizes.
+
+#### 3.9.2 Functional Requirements
+
+**FR-009-01:** Mobile Layout
+- System shall display mobile-optimized navigation
+- System shall use bottom tab bar on mobile
+- Cards shall stack vertically on small screens
+- Touch targets shall be minimum 44x44px
+
+**FR-009-02:** Tablet Layout
+- System shall use 2-column grid on tablets
+- Sidebar shall be collapsible
+- System shall support landscape and portrait modes
+
+**FR-009-03:** Desktop Layout
+- System shall use full sidebar navigation
+- System shall display 3-4 column grids
+- System shall maximize screen real estate
+
+---
+
+## 4. External Interface Requirements
+
+### 4.1 User Interfaces
+
+#### 4.1.1 General UI Requirements
+- **Color Scheme:** Indigo/purple gradient (primary), white/gray (neutral)
+- **Typography:** System fonts with fallback (sans-serif)
+- **Icons:** Lucide React icon library
+- **Animations:** Smooth transitions (200-300ms)
+- **Accessibility:** WCAG 2.1 Level AA compliance
+
+#### 4.1.2 Screen Layouts
+
+**Login Screen:**
+- Email and password input fields
+- "Sign In" button (primary action)
+- "Sign in with Google" button (secondary action)
+- "Forgot Password" link
+- Registration link
+
+**Dashboard Screen:**
+- Top navigation bar with logo and user menu
+- Collapsible sidebar with main navigation
+- Statistics cards (4-column grid)
+- Upcoming assignments list
+- Course progress section
+- Recent activity feed
+
+**Course List Screen:**
+- Grid of course cards (3 columns desktop, 1 mobile)
+- Each card displays: icon, title, code, instructor, stats, progress
+- Search bar and filter options
+- "Enroll in New Course" button
+
+**Course Detail Screen:**
+- Course header with title, code, instructor
+- Statistics section (students, modules, rating)
+- Module list with completion checkmarks
+- Assignment section
+- Course materials/resources
+
+**Assignment Screen:**
+- Two-column layout: Pending (left), Completed (right)
+- Each assignment card shows: title, course, due date, status
+- "Submit" button for pending assignments
+- Grade display for completed assignments
+
+**Grades Screen:**
+- Overall GPA card at top
+- List of courses with individual grades
+- Grade breakdown for each course
+- Performance trend chart
+
+### 4.2 Hardware Interfaces
+
+**Not Applicable:** Web-based application with no direct hardware interfaces.
+
+### 4.3 Software Interfaces
+
+#### 4.3.1 Firebase Authentication
+- **Purpose:** User identity and access management
+- **Communication:** HTTPS REST API
+- **Data Format:** JSON
+- **Key Operations:** signInWithEmailAndPassword(), createUserWithEmailAndPassword(), signInWithPopup()
+
+#### 4.3.2 Cloud Firestore
+- **Purpose:** Real-time NoSQL database
+- **Communication:** WebSocket (real-time), HTTPS (REST)
+- **Data Format:** JSON documents
+- **Collections:** users, courses, assignments, submissions, grades
+- **Key Operations:** get(), set(), update(), delete(), onSnapshot()
+
+#### 4.3.3 Firebase Hosting
+- **Purpose:** Static web hosting with CDN
+- **Communication:** HTTPS
+- **Features:** SSL certificates, custom domain support, automatic deployment
+
+### 4.4 Communication Interfaces
+
+**Network Protocols:**
+- HTTPS (TLS 1.2+) for all communications
+- WebSocket for real-time Firestore updates
+- SMTP for email notifications (via Firebase)
+
+**Data Exchange Format:**
+- JSON for all API communications
+- Base64 encoding for file uploads
+- UTF-8 character encoding
+
+**API Rate Limits:**
+- Firebase Authentication: 10 requests/second per user
+- Firestore: 10,000 reads/writes per day (free tier)
+- Storage: 1GB total storage (free tier)
+
+---
+
+## 5. System Requirements
+
+### 5.1 Functional Requirements Summary
+
+| ID | Requirement | Priority | Status |
+|---|---|---|---|
+| FR-001 | User Authentication | High | ✅ Implemented |
+| FR-002 | Dashboard & Analytics | High | ✅ Implemented |
+| FR-003 | Course Management | High | ✅ Implemented |
+| FR-004 | Assignment Management | High | ✅ Implemented |
+| FR-005 | Grade Management | Medium | ✅ Implemented |
+| FR-006 | Profile Management | Medium | 🔄 Partial |
+| FR-007 | Notifications | Medium | 📋 Planned |
+| FR-008 | Search & Filter | Low | 📋 Planned |
+| FR-009 | Responsive Design | High | ✅ Implemented |
+
+### 5.2 Database Requirements
+
+#### 5.2.1 Users Collection
+```javascript
+{
+  uid: string (primary key),
+  name: string,
+  email: string,
+  photoURL: string,
+  role: enum('student', 'instructor', 'admin'),
+  major: string,
+  createdAt: timestamp,
+  lastLogin: timestamp,
+  courses: array<string>, // course IDs
+  assignments: array<string>, // assignment IDs
+  studyHours: number,
+  studentData: {
+    enrollmentDate: timestamp,
+    year: number,
+    gpa: number,
+    enrolledCourses: array<string>,
+    completedCourses: array<string>
+  }
+}
+```
+
+#### 5.2.2 Courses Collection
+```javascript
+{
+  id: string (auto-generated),
+  title: string,
+  code: string (unique),
+  description: string,
+  instructor: string,
+  instructorId: string,
+  icon: string,
+  category: string,
+  rating: number,
+  students: number,
+  modules: number,
+  createdAt: timestamp,
+  createdBy: string,
+  syllabus: string,
+  prerequisites: array<string>,
+  enrolledStudents: array<string>
+}
+```
+
+#### 5.2.3 Assignments Collection
+```javascript
+{
+  id: string (auto-generated),
+  title: string,
+  course: string,
+  courseId: string,
+  description: string,
+  dueDate: timestamp,
+  maxPoints: number,
+  submissionType: enum('file', 'text', 'url'),
+  allowLateSubmission: boolean,
+  latePenalty: number,
+  createdAt: timestamp,
+  createdBy: string
+}
+```
+
+#### 5.2.4 Submissions Collection
+```javascript
+{
+  id: string (auto-generated),
+  assignmentId: string,
+  studentId: string,
+  submittedAt: timestamp,
+  content: string,
+  fileUrl: string,
+  status: enum('submitted', 'graded', 'late'),
+  grade: number,
+  feedback: string,
+  gradedBy: string,
+  gradedAt: timestamp
+}
+```
+
+### 5.3 Data Integrity Requirements
+
+**DR-001:** All user emails must be unique across the system  
+**DR-002:** Course codes must be unique within the institution  
+**DR-003:** Students cannot enroll in the same course twice  
+**DR-004:** Grades must be between 0 and maximum points  
+**DR-005:** Due dates must be in the future at creation time  
+**DR-006:** Cascade delete: Deleting course deletes all assignments  
+**DR-007:** Foreign key integrity: All references must exist
+
+---
+
+## 6. Non-Functional Requirements
+
+### 6.1 Performance Requirements
+
+**NFR-001: Response Time**
+- Page load time: < 2 seconds on 3G connection
+- API response time: < 500ms for 95% of requests
+- Real-time updates: < 1 second delay
+- Search results: < 300ms
+
+**NFR-002: Throughput**
+- Support 1,000 concurrent users
+- Handle 10,000 database operations per minute
+- Support 100 simultaneous file uploads
+
+**NFR-003: Resource Usage**
+- Client-side memory: < 100MB
+- Bundle size: < 500KB (gzipped)
+- Database size: Scalable to 100GB+
+
+### 6.2 Safety Requirements
+
+**NFR-004: Data Backup**
+- Automated daily backups of Firestore
+- Point-in-time recovery within 7 days
+- Backup retention: 30 days
+
+**NFR-005: Failure Recovery**
+- Automatic retry on failed requests (3 attempts)
+- Graceful degradation when services unavailable
+- Error logging and monitoring
+
+### 6.3 Security Requirements
+
+**NFR-006: Authentication**
+- Multi-factor authentication support (future)
+- Session timeout after 30 minutes of inactivity
+- Secure password hashing (Firebase default: bcrypt)
+- Protection against brute force attacks (rate limiting)
+
+**NFR-007: Authorization**
+- Role-based access control (RBAC)
+- Firestore security rules enforced server-side
+- Principle of least privilege
+
+**NFR-008: Data Security**
+- All data encrypted in transit (TLS 1.2+)
+- All data encrypted at rest (AES-256)
+- No sensitive data in client-side storage
+- SQL injection prevention (NoSQL database)
+- XSS prevention (input sanitization)
+
+**NFR-009: Privacy**
+- GDPR compliance for EU users
+- FERPA compliance for educational records
+- User data deletion on account termination
+- Cookie consent banner
+
+### 6.4 Software Quality Attributes
+
+**NFR-010: Availability**
+- System uptime: 99.9% (Firebase SLA)
+- Planned maintenance: < 4 hours/month
+- Maximum unplanned downtime: 8 hours/year
+
+**NFR-011: Maintainability**
+- Modular code architecture
+- Comprehensive inline documentation
+- Coding standards: Airbnb JavaScript Style Guide
+- Version control with Git
+- Automated testing coverage > 80%
+
+**NFR-012: Portability**
+- Cross-browser compatibility (Chrome, Firefox, Safari, Edge)
+- Cross-platform (Windows, macOS, Linux, iOS, Android)
+- No platform-specific dependencies
+- Progressive Web App (PWA) support (future)
+
+**NFR-013: Usability**
+- Maximum 3 clicks to reach any feature
+- Intuitive navigation without training
+- Consistent UI patterns across all screens
+- Error messages clear and actionable
+- Accessibility: WCAG 2.1 Level AA
+
+**NFR-014: Scalability**
+- Horizontal scaling via Firebase infrastructure
+- Support for 10,000+ users
+- Database query optimization with indexes
+- CDN for static assets
+
+**NFR-015: Reliability**
+- Mean Time Between Failures (MTBF): > 720 hours
+- Mean Time To Recovery (MTTR): < 1 hour
+- Error rate: < 0.1% of all requests
+
+### 6.5 Business Rules
+
+**BR-001:** Students cannot enroll in courses without authentication  
+**BR-002:** Assignment submissions after due date are marked "Late"  
+**BR-003:** Instructors can only modify their own courses  
+**BR-004:** GPA is calculated using 4.0 scale  
+**BR-005:** Completed courses do not allow new enrollments  
+**BR-006:** Minimum password length is 8 characters  
+**BR-007:** Course code format: 2-4 letter prefix + 3 digits (e.g., CS101)
+
+---
+
+## 7. Appendices
+
+### 7.1 Glossary
+
+| Term | Definition |
+|---|---|
+| **LMS** | Learning Management System - software for course administration |
+| **CRUD** | Create, Read, Update, Delete - basic database operations |
+| **Firebase** | Google's mobile and web application development platform |
+| **Firestore** | NoSQL cloud database by Firebase |
+| **OAuth** | Open standard for access delegation (e.g., Google login) |
+| **SPA** | Single Page Application - web app that loads single HTML page |
+| **RBAC** | Role-Based Access Control - permissions based on user roles |
+| **GPA** | Grade Point Average - measure of academic achievement |
+| **CDN** | Content Delivery Network - distributed server network |
+| **API** | Application Programming Interface |
+| **REST** | Representational State Transfer - web service architecture |
+
+### 7.2 Acronyms
+
+- **SRS:** Software Requirements Specification
+- **UI:** User Interface
+- **UX:** User Experience
+- **HTML:** HyperText Markup Language
+- **CSS:** Cascading Style Sheets
+- **JS:** JavaScript
+- **JSON:** JavaScript Object Notation
+- **HTTPS:** HyperText Transfer Protocol Secure
+- **SMTP:** Simple Mail Transfer Protocol
+- **WCAG:** Web Content Accessibility Guidelines
+- **GDPR:** General Data Protection Regulation
+- **FERPA:** Family Educational Rights and Privacy Act
+- **PWA:** Progressive Web Application
+- **TLS:** Transport Layer Security
+
+### 7.3 Analysis Models
+
+#### 7.3.1 Use Case Diagram
+```
+┌─────────────┐
+│   Student   │
+└──────┬──────┘
+       │ enrolls in
+       ├─────────────► ┌──────────┐
+       │ views         │  Course  │
+       │ completes     └──────────┘
+       │
+       │ submits       ┌──────────┐
+       ├─────────────► │Assignment│
+       │ views grade   └──────────┘
+       │
+       │ views         ┌──────────┐
+       └─────────────► │  Grades  │
+                       └──────────┘
+
+┌─────────────┐
+│ Instructor  │
+└──────┬──────┘
+       │ creates
+       ├─────────────► ┌──────────┐
+       │ modifies      │  Course  │
+       │               └──────────┘
+       │
+       │ creates       ┌──────────┐
+       ├─────────────► │Assignment│
+       │ grades        └──────────┘
+       │
+       │ publishes     ┌──────────┐
+       └─────────────► │  Grades  │
+                       └──────────┘
+```
+
+#### 7.3.2 Entity-Relationship Diagram
+```
+┌──────────┐         ┌──────────┐
+│   User   │────────▶│  Course  │
+│          │ enrolls │          │
+└──────────┘         └──────────┘
+     │                     │
+     │ submits             │ contains
+     │                     │
+     ▼                     ▼
+┌──────────┐         ┌──────────┐
+│Submission│────────▶│Assignment│
+│          │ for     │          │
+└──────────┘         └──────────┘
+     │                     
+     │ receives              
+     ▼                     
+┌──────────┐         
+│  Grade   │         
+│          │         
+└──────────┘         
+```
+
+### 7.4 Change Log
+
+| Version | Date | Author | Changes |
+|---|---|---|---|
+| 0.1 | 2025-11-01 | Dev Team | Initial draft |
+| 0.5 | 2025-11-15 | Dev Team | Added detailed requirements |
+| 1.0 | 2025-12-16 | Dev Team | Production release version |
+
+### 7.5 Approval
+
+| Role | Name | Signature | Date |
+|---|---|---|---|
+| Product Owner | [Name] | _______________ | ___________ |
+| Lead Developer | [Name] | _______________ | ___________ |
+| QA Lead | [Name] | _______________ | ___________ |
+| Stakeholder | [Name] | _______________ | ___________ |
+
+---
+
+**Document End**

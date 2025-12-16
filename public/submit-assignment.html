@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submit Assignment - EduLMS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation Bar -->
+    <nav class="bg-white shadow-sm sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-3">
+                    <i class="fas fa-graduation-cap text-blue-600 text-2xl"></i>
+                    <span class="text-xl font-bold text-gray-800">EduLMS</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button id="backBtn" class="text-gray-600 hover:text-gray-900 flex items-center space-x-1">
+                        <i class="fas fa-arrow-left"></i>
+                        <span>Back</span>
+                    </button>
+                    <button id="userMenuBtn" class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 text-white flex items-center justify-center hover:shadow-lg transition">
+                        <i class="fas fa-user"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-4xl mx-auto px-4 py-8">
+        <!-- Assignment Details Card -->
+        <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+            <div class="flex items-start justify-between mb-4">
+                <div>
+                    <h1 id="assignmentTitle" class="text-2xl font-bold text-gray-900 mb-2">Assignment Title</h1>
+                    <p id="assignmentCourse" class="text-gray-600">Course Name</p>
+                </div>
+                <div id="statusBadge" class="px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
+                    Pending
+                </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-4 mb-6 pt-6 border-t border-gray-200">
+                <div>
+                    <p class="text-sm text-gray-600">Due Date</p>
+                    <p id="dueDate" class="text-lg font-semibold text-gray-900">--</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600">Max Points</p>
+                    <p id="maxPoints" class="text-lg font-semibold text-gray-900">--</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600">Submission Type</p>
+                    <p id="submissionType" class="text-lg font-semibold text-gray-900">--</p>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="font-semibold text-gray-900 mb-2">Description</h3>
+                <p id="assignmentDescription" class="text-gray-700">Loading...</p>
+            </div>
+        </div>
+
+        <!-- Submission Form -->
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h2 class="text-xl font-bold text-gray-900 mb-6">Submit Your Work</h2>
+
+            <!-- Check if already submitted -->
+            <div id="previousSubmission" class="hidden mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <h3 class="font-semibold text-blue-900 mb-3">Previous Submission</h3>
+                <div class="space-y-2 text-sm">
+                    <p><strong>Submitted:</strong> <span id="prevSubmitDate">--</span></p>
+                    <p><strong>Status:</strong> <span id="prevStatus">--</span></p>
+                    <p id="prevGrade" class="hidden"><strong>Grade:</strong> <span id="prevGradeValue">--</span></p>
+                    <p id="prevFeedback" class="hidden"><strong>Feedback:</strong> <span id="prevFeedbackValue">--</span></p>
+                </div>
+            </div>
+
+            <form id="submissionForm" class="space-y-6">
+                <!-- File Upload Section -->
+                <div id="fileUploadSection">
+                    <label class="block text-sm font-medium text-gray-700 mb-3">Upload File</label>
+                    <div id="dropZone" class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-blue-500 transition">
+                        <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-3"></i>
+                        <p class="text-gray-900 font-medium mb-1">Drop your file here or click to upload</p>
+                        <p class="text-sm text-gray-600 mb-3">Supported: PDF, DOCX, DOC, TXT, JPG, PNG (Max 10MB)</p>
+                        <input type="file" id="fileInput" class="hidden" accept=".pdf,.docx,.doc,.txt,.jpg,.jpeg,.png">
+                        <button type="button" id="selectFileBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition inline-block">
+                            Select File
+                        </button>
+                    </div>
+                    <div id="filePreview" class="hidden mt-4 p-4 bg-gray-50 rounded-lg">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <i id="fileIcon" class="fas fa-file text-2xl text-gray-400"></i>
+                                <div>
+                                    <p id="fileName" class="font-medium text-gray-900">--</p>
+                                    <p id="fileSize" class="text-sm text-gray-600">--</p>
+                                </div>
+                            </div>
+                            <button type="button" id="removeFileBtn" class="text-red-600 hover:text-red-700">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                        <div id="uploadProgress" class="hidden mt-3">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-sm text-gray-600">Uploading...</span>
+                                <span id="progressPercent" class="text-sm font-medium text-gray-900">0%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div id="progressBar" class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Text Submission Section -->
+                <div id="textSubmissionSection" class="hidden">
+                    <label class="block text-sm font-medium text-gray-700 mb-3">Your Answer</label>
+                    <textarea id="textContent" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none" rows="8" placeholder="Enter your answer here..."></textarea>
+                    <p class="text-sm text-gray-600 mt-2">Character count: <span id="charCount">0</span> / 5000</p>
+                </div>
+
+                <!-- URL Submission Section -->
+                <div id="urlSubmissionSection" class="hidden">
+                    <label class="block text-sm font-medium text-gray-700 mb-3">Submission URL</label>
+                    <input type="url" id="urlContent" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="https://example.com">
+                </div>
+
+                <!-- Comments Section -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-3">Comments (Optional)</label>
+                    <textarea id="comments" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none" rows="4" placeholder="Add any comments about your submission..."></textarea>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+                    <button type="button" id="cancelBtn" class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
+                        Cancel
+                    </button>
+                    <button type="submit" id="submitBtn" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                        Submit Assignment
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl p-6 max-w-sm mx-4">
+            <h3 class="text-lg font-bold text-gray-900 mb-4">Confirm Submission</h3>
+            <p class="text-gray-700 mb-6">Are you sure you want to submit this assignment? You can resubmit until the due date.</p>
+            <div class="flex justify-end space-x-3">
+                <button type="button" id="confirmCancel" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                    Cancel
+                </button>
+                <button type="button" id="confirmSubmit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                    Confirm
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="hidden fixed bottom-4 right-4 bg-gray-900 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 z-50">
+        <i id="toastIcon" class="fas fa-check-circle"></i>
+        <span id="toastMessage">Success</span>
+    </div>
+
+    <script src="firebase-config.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/submissionManager.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
